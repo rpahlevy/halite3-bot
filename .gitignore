@@ -1,0 +1,15 @@
+# misc
+/benchmark
+/python3
+
+# current
+*.log
+*.exe
+*.zip
+*.class
+/hlt/*.class
+/replays/*
+
+# prev version
+/v*/*.class
+/v*/hlt/*.class
