@@ -108,6 +108,11 @@ public class GameMap {
 		if (nextDirection != Direction.STILL) {
             int cost = (int) Math.ceil(at(ship.position).halite * 0.1);
             if (cost == 0 || ship.halite > cost) {
+                MapCell dCell = at(destination);
+                if (!dCell.hasStructure()) {
+                    dCell.markUnsafe(ship);
+                }
+                
                 at(nextPosition).markUnsafe(ship);
                 at(ship.position).ship = null;
             } else {
