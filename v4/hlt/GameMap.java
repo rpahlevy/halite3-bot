@@ -95,7 +95,7 @@ public class GameMap {
 		for (Direction d: Direction.ALL_CARDINALS) {
 			Position p = normalize(ship.position.directionalOffset(d));
 			MapCell cell = at(p);
-			if (cell.isOccupied()) continue;
+			// if (cell.isOccupied()) continue;
 			
 			int distTest = calculateDistance(p, destination);
 			if (distTest < dist) {
