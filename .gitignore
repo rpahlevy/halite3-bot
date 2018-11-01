@@ -3,13 +3,15 @@
 /python3
 /local
 
-# current
-*.log
+# .
 Halite3_Offline_Windows.exe
-*.zip
-*.class
-/hlt/*.class
-/replays/*
+
+# current
+/current/*.zip
+/current/*.log
+/current/*.class
+/current/hlt/*.class
+/current/replays/*
 
 # prev version
 /v*/*.class
