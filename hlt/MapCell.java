@@ -5,10 +5,13 @@ public class MapCell {
     public int halite;
     public Ship ship;
     public Entity structure;
+	
+	public boolean booked;
 
     public MapCell(final Position position, final int halite) {
         this.position = position;
         this.halite = halite;
+		this.booked = false;
     }
 
     public boolean isEmpty() {

@@ -34,6 +34,8 @@ public class MyBot {
             final Player me = game.me;
             final GameMap gameMap = game.gameMap;
 
+			final HashMap<Ship,Direction> queuedShip = new HashMap<>();
+			final HashMap<Ship,Direction> plannedShip = new HashMap<>();
             final ArrayList<Command> commandQueue = new ArrayList<>();
 
             for (final Ship ship : me.ships.values()) {
@@ -42,51 +44,194 @@ public class MyBot {
 					shipStatus.put(ship.id, STATUS_EXPLORE);
 				}
 				
-				log("Ship "+ ship.id +" ["+ shipStatus.get(ship.id) +"] has "+ ship.halite +" halite");
+				// log("Ship "+ ship.id +" ["+ shipStatus.get(ship.id) +"] has "+ ship.halite +" halite");
 				Direction d = Direction.STILL;
 				if (status == STATUS_RETURN)
 				{
 					if (ship.position.equals(me.shipyard.position)) {
 						shipStatus.put(ship.id, STATUS_EXPLORE);
-						d = gameMap.getNextHaliteNode(ship);
+						d = gameMap.getNextHaliteDirection(ship);
 					} else {
-						// log("\tShip: "+ ship.position +" | "+ me.shipyard.position +": "+ (ship.position == me.shipyard.position));
-						d = gameMap.navigate(ship, me.shipyard.position);
+						d = gameMap.getNextDirection(ship, me.shipyard.position);
 					}
 				}
 				else
 				{
-					if (ship.halite >= Constants.MAX_HALITE * 0.75) {
+					if (ship.halite >= Constants.MAX_HALITE * 0.9) {
 						shipStatus.put(ship.id, STATUS_RETURN);
-						d = gameMap.navigate(ship, me.shipyard.position);
-					} else if (gameMap.at(ship).halite < Constants.MAX_HALITE / 10) {
-						d = gameMap.getNextHaliteNode(ship);
+						d = gameMap.getNextDirection(ship, me.shipyard.position);
+					} else if (gameMap.at(ship).halite < Constants.MAX_HALITE / 20) {
+						d = gameMap.getNextHaliteDirection(ship);
 					}
 				}
 				
-				commandQueue.add(ship.move(d));
+				// commandQueue.add(ship.move(d));
+				Position targetPosition = gameMap.normalize(ship.position.directionalOffset(d));
+				MapCell targetNode = gameMap.at(targetPosition);
+				
+				// check targetNode safe or not
+				boolean planned = true;
+				Ship partnerShip = null;
+				Direction partnerDirection = null;
+				Position partnerTargetPosition = null;
+				do {
+					// if not moving
+					if (d == Direction.STILL) {
+						break;
+					}
+					
+					// if target node not occupied
+					if (!targetNode.isOccupied()) {
+						break;
+					}
+					
+					// check if node occupied by other player
+					Ship ocp = targetNode.ship;
+					if (!ocp.owner.equals(ship.owner)) {
+						d = Direction.STILL;
+						break;
+					}
+					
+					// check if ocp has been queued
+					Direction ocpQueue = queuedShip.get(ocp);
+					if (ocpQueue == null) {
+						planned = false;
+						break;
+					}
+					
+					// check ocp target position is ship's position
+					Position ocpTargetPosition = gameMap.normalize(ocp.position.directionalOffset(ocpQueue));
+					if (ocpTargetPosition.equals(ship.position)) {
+						// best match!
+						queuedShip.remove(ocp);
+						partnerShip = ocp;
+						partnerDirection = ocpQueue;
+						partnerTargetPosition = ocpTargetPosition;
+					} else {
+						// wait for ocp, ok?
+						planned = false;
+					}
+				} while (false);
+				
+				// if planned add to command
+				if (planned) {
+					commandQueue.add(ship.move(d));
+					
+					if (d == Direction.STILL) {
+						gameMap.at(ship.position).markUnsafe(ship);
+						log("[PLAN] Ship "+ ship.id +" ["+ d +"] at "+ ship.position.x +","+ ship.position.y);
+					} else {
+						gameMap.at(ship.position).ship = null;
+						targetNode.markUnsafe(ship);
+						log("[PLAN] Ship "+ ship.id +" ["+ d +"] to "+ targetPosition.x +","+ targetPosition.y);
+					}
+					
+				} else {
+					log("[QUED] Ship "+ ship.id +" ["+ d +"] to "+ targetPosition.x +","+ targetPosition.y);
+				}
+				
+				// also help partner to move if any
+				if (partnerShip != null && partnerDirection != null) {
+					commandQueue.add(partnerShip.move(partnerDirection));
+					gameMap.at(partnerTargetPosition).markUnsafe(partnerShip);
+				}
+				
             }
 			
+			
+			for (final Ship ship: queuedShip.keySet()) {
+				if (ship == null) continue;
+				
+				Direction d = queuedShip.get(ship);
+				Position targetPosition = gameMap.normalize(ship.position.directionalOffset(d));
+				MapCell targetNode = gameMap.at(targetPosition);
+				
+				boolean planned = true;
+				Ship partnerShip = null;
+				Direction partnerDirection = null;
+				Position partnerTargetPosition = null;
+				do {
+					// if target node not occupied
+					if (!targetNode.isOccupied()) {
+						break;
+					}
+					
+					// check if node occupied by other player
+					Ship ocp = targetNode.ship;
+					if (!ocp.owner.equals(ship.owner)) {
+						d = Direction.STILL;
+						break;
+					}
+					
+					// check if ocp has been queued
+					Direction ocpQueue = queuedShip.get(ocp);
+					if (ocpQueue == null) {
+						planned = false;
+						break;
+					}
+					
+					// check ocp target position is ship's position
+					Position ocpTargetPosition = gameMap.normalize(ocp.position.directionalOffset(ocpQueue));
+					if (ocpTargetPosition.equals(ship.position)) {
+						// best match!
+						queuedShip.remove(ocp);
+						partnerShip = ocp;
+						partnerDirection = ocpQueue;
+						partnerTargetPosition = ocpTargetPosition;
+					} else {
+						// wait for ocp, ok?
+						planned = false;
+					}
+				} while (false);
+				
+				// if planned add to command
+				if (planned) {
+					queuedShip.remove(ship);
+					commandQueue.add(ship.move(d));
+					
+					if (d == Direction.STILL) {
+						gameMap.at(ship.position).markUnsafe(ship);
+					} else {
+						gameMap.at(ship.position).ship = null;
+						targetNode.markUnsafe(ship);
+					}
+				} else {
+					queuedShip.remove(ship);
+					commandQueue.add(ship.stayStill());
+					gameMap.at(ship.position).markUnsafe(ship);
+				}
+				
+				
+				// also help partner to move if any
+				if (partnerShip != null && partnerDirection != null) {
+					commandQueue.add(partnerShip.move(partnerDirection));
+					gameMap.at(partnerTargetPosition).markUnsafe(partnerShip);
+				}
+			}
+			
 
-            if (
+            if(
                 game.turnNumber <= 200 &&
-                me.halite >= Constants.SHIP_COST &&
-                !gameMap.at(me.shipyard).isOccupied())
-            {
-                // check if shipyard is surrounded
-                boolean shipyardSurrounded = true;
-                for (Direction d: Direction.ALL_CARDINALS) {
-                    Position p = gameMap.normalize(me.shipyard.position.directionalOffset(d));
-                    MapCell cell = gameMap.at(p);
-                    if (!cell.isOccupied()) {
-                        shipyardSurrounded = false;
-                        break;
-                    }
-                }
+                me.halite >= Constants.SHIP_COST )
+			{
+				final Ship ocp = gameMap.at(me.shipyard).ship;
+				if (ocp == null || !ocp.owner.equals(me.id))
+				{
+					// check if shipyard is surrounded
+					boolean shipyardSurrounded = true;
+					for (Direction d: Direction.ALL_CARDINALS) {
+						Position p = gameMap.normalize(me.shipyard.position.directionalOffset(d));
+						MapCell cell = gameMap.at(p);
+						if (!cell.isOccupied()) {
+							shipyardSurrounded = false;
+							break;
+						}
+					}
 
-                if (!shipyardSurrounded) {
-                    commandQueue.add(me.shipyard.spawn());
-                }
+					if (!shipyardSurrounded) {
+						commandQueue.add(me.shipyard.spawn());
+					}
+				}
             }
 
             game.endTurn(commandQueue);

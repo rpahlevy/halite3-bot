@@ -86,11 +86,11 @@ public class GameMap {
         return Direction.STILL;
     }
 	
-	public Direction navigate(final Ship ship, final Position destination)
+	public Direction getNextDirection(final Ship ship, final Position destination)
 	{
 		int dist = calculateDistance(ship.position, destination) * 2;
-		Direction nextDirection = Direction.STILL;
 		Position nextPosition = ship.position;
+		Direction nextDirection = Direction.STILL;
 		
 		for (Direction d: Direction.ALL_CARDINALS) {
 			Position p = normalize(ship.position.directionalOffset(d));
@@ -100,32 +100,37 @@ public class GameMap {
 			int distTest = calculateDistance(p, destination);
 			if (distTest < dist) {
 				dist = distTest;
-				nextDirection = d;
 				nextPosition = p;
+				nextDirection = d;
 			}
 		}
 		
+		// if (!nextPosition.equals(ship.position)) {
 		if (nextDirection != Direction.STILL) {
             int cost = (int) Math.ceil(at(ship.position).halite * 0.1);
             if (cost == 0 || ship.halite > cost) {
-                MapCell dCell = at(destination);
-                if (!dCell.hasStructure()) {
-                    dCell.markUnsafe(ship);
-                }
+                // MapCell dCell = at(destination);
+                // if (!dCell.hasStructure()) {
+                    // dCell.markUnsafe(ship);
+                // }
                 
-                at(nextPosition).markUnsafe(ship);
-                at(ship.position).ship = null;
-            } else {
-                nextDirection = Direction.STILL;
+                // at(nextPosition).markUnsafe(ship);
+                // at(ship.position).ship = null;
+				
+				return nextDirection;
             }
+			// else {
+                // nextDirection = Direction.STILL;
+            // }
 		}
 		
-		return nextDirection;
+		return Direction.STILL;
 	}
 	
-	public Direction getNextHaliteNode(final Ship ship)
-	{
-        final int MIN_HALITE = 101;
+	public Direction getNextHaliteDirection(final Ship ship) {
+		return getNextHaliteDirection(ship, 51);
+	}
+	public Direction getNextHaliteDirection(final Ship ship, final int targetHalite){
         final ArrayList<Position> frontier = new ArrayList<>();
         final ArrayList<Position> visited = new ArrayList<>();
 
@@ -135,7 +140,6 @@ public class GameMap {
         boolean nodeFound = false;
 
         int altHalite = 0;
-        int targetHalite = MIN_HALITE;
         Position nextPosition = ship.position;
         Position altPosition = ship.position;
         while (frontier.size() > 0 && !nodeFound)
@@ -149,13 +153,14 @@ public class GameMap {
                 }
 
                 MapCell cell = at(p);
-                // if (cell.isOccupied()) continue;
+                if (cell.booked) continue;
 
                 if (cell.halite >= targetHalite) {
                     nodeFound = true;
                     nextPosition = p;
 
-                    break;
+					// find the most, so dont breakdance
+                    // break;
                 }
 
                 if (cell.halite > altHalite) {
@@ -167,43 +172,25 @@ public class GameMap {
         // check if really found the node
         if (nodeFound)
         {
-            return navigate(ship, nextPosition);
+			at(nextPosition).booked = true;
+            return getNextDirection(ship, nextPosition);
         }
         // else check alternative
         else if (!altPosition.equals(ship.position))
         {
-            return navigate(ship, altPosition);
+			at(altPosition).booked = true;
+            return getNextDirection(ship, altPosition);
         }
 
+		// should not reached here cause of altPosition
         return Direction.STILL;
-
-		// int maxHalite = 0;
-		// Direction nextDirection = Direction.STILL;
-		// Position nextPosition = ship.position;
-		// for (Direction d: Direction.ALL_CARDINALS) {
-		// 	Position p = ship.position.directionalOffset(d);
-		// 	MapCell cell = at(p);
-		// 	if (cell.isOccupied()) continue;
-			
-		// 	if (cell.halite >= maxHalite) {
-		// 		maxHalite = cell.halite;
-		// 		nextDirection = d;
-		// 		nextPosition = p;
-		// 	}
-		// }
-		
-		// if (nextDirection != Direction.STILL) {
-		// 	at(nextPosition).markUnsafe(ship);
-		// 	at(ship.position).ship = null;
-		// }
-		
-		// return nextDirection;
 	}
 
     void _update() {
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 cells[y][x].ship = null;
+				cells[y][x].booked = false;
             }
         }
 

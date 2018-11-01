@@ -1,10 +1,11 @@
 # misc
 /benchmark
 /python3
+/local
 
 # current
 *.log
-*.exe
+Halite3_Offline_Windows.exe
 *.zip
 *.class
 /hlt/*.class
