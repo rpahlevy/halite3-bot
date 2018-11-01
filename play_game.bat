@@ -1,1 +1,1 @@
-halite.exe --replay-directory replays/ -vvv --width 32 --height 32 "java MyBot" "cd v3 && java MyBot"
+halite.exe --replay-directory replays/ -vvv --width 64 --height 64 "java MyBot" "cd v2 && java MyBot" "cd v3 && java MyBot" "cd v3 && java MyBot"

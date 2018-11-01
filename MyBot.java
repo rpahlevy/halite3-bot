@@ -39,6 +39,7 @@ public class MyBot {
             final ArrayList<Command> commandQueue = new ArrayList<>();
 
             for (final Ship ship : me.ships.values()) {
+                ship.planned = false;
 				String status = shipStatus.get(ship.id);
 				if (status == null) {
 					shipStatus.put(ship.id, STATUS_EXPLORE);
@@ -115,6 +116,7 @@ public class MyBot {
 				
 				// if planned add to command
 				if (planned) {
+                    ship.planned = true;
 					commandQueue.add(ship.move(d));
 					
 					if (d == Direction.STILL) {
@@ -127,20 +129,25 @@ public class MyBot {
 					}
 					
 				} else {
+                    queuedShip.put(ship, d);
 					log("[QUED] Ship "+ ship.id +" ["+ d +"] to "+ targetPosition.x +","+ targetPosition.y);
 				}
 				
 				// also help partner to move if any
 				if (partnerShip != null && partnerDirection != null) {
+                    partnerShip.planned = true;
 					commandQueue.add(partnerShip.move(partnerDirection));
 					gameMap.at(partnerTargetPosition).markUnsafe(partnerShip);
+                    log("[PLAN-P] Ship "+ partnerShip.id +" ["+ d +"] to "+ partnerTargetPosition.x +","+ partnerTargetPosition.y);
 				}
 				
             }
 			
+            // log("##")
 			
 			for (final Ship ship: queuedShip.keySet()) {
-				if (ship == null) continue;
+                // log("\t[CP] Ship "+ ship.id +" ["+ d +"]");
+				// if (ship == null) continue;
 				
 				Direction d = queuedShip.get(ship);
 				Position targetPosition = gameMap.normalize(ship.position.directionalOffset(d));
@@ -174,7 +181,7 @@ public class MyBot {
 					Position ocpTargetPosition = gameMap.normalize(ocp.position.directionalOffset(ocpQueue));
 					if (ocpTargetPosition.equals(ship.position)) {
 						// best match!
-						queuedShip.remove(ocp);
+						// queuedShip.remove(ocp);
 						partnerShip = ocp;
 						partnerDirection = ocpQueue;
 						partnerTargetPosition = ocpTargetPosition;
@@ -185,27 +192,36 @@ public class MyBot {
 				} while (false);
 				
 				// if planned add to command
+                ship.planned = true;
 				if (planned) {
-					queuedShip.remove(ship);
 					commandQueue.add(ship.move(d));
 					
 					if (d == Direction.STILL) {
 						gameMap.at(ship.position).markUnsafe(ship);
+                        log("[PLAN] Ship "+ ship.id +" ["+ d +"] at "+ ship.position.x +","+ ship.position.y);
 					} else {
-						gameMap.at(ship.position).ship = null;
+                        if (partnerShip == null || (partnerShip != null && !partnerShip.planned)) {
+						    gameMap.at(ship.position).ship = null;
+                        }
+
 						targetNode.markUnsafe(ship);
+                        log("[PLAN] Ship "+ ship.id +" ["+ d +"] to "+ targetPosition.x +","+ targetPosition.y);
 					}
 				} else {
-					queuedShip.remove(ship);
 					commandQueue.add(ship.stayStill());
 					gameMap.at(ship.position).markUnsafe(ship);
+                    log("[PLAN-Q] Ship "+ ship.id +" ["+ d +"] at "+ ship.position.x +","+ ship.position.y);
 				}
 				
 				
 				// also help partner to move if any
 				if (partnerShip != null && partnerDirection != null) {
-					commandQueue.add(partnerShip.move(partnerDirection));
-					gameMap.at(partnerTargetPosition).markUnsafe(partnerShip);
+                    if (!partnerShip.planned) {
+                        partnerShip.planned = true;
+                        commandQueue.add(partnerShip.move(partnerDirection));
+                        gameMap.at(partnerTargetPosition).markUnsafe(partnerShip);
+                        log("[PLAN-P] Ship "+ partnerShip.id +" ["+ d +"] to "+ partnerTargetPosition.x +","+ partnerTargetPosition.y);
+                    }
 				}
 			}
 			
