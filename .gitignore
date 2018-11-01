@@ -5,13 +5,11 @@
 
 # .
 Halite3_Offline_Windows.exe
-
-# current
-/current/*.zip
-/current/*.log
-/current/*.class
-/current/hlt/*.class
-/current/replays/*
+*.zip
+*.log
+*.class
+hlt/*.class
+replays/*
 
 # prev version
 /v*/*.class

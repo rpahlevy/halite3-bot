@@ -1,7 +1,7 @@
 // This Java API uses camelCase instead of the snake_case as documented in the API docs.
 //     Otherwise the names of methods are consistent.
 
-package v3;
+// package v3;
 
 import hlt.*;
 
