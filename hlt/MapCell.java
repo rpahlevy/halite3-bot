@@ -29,4 +29,9 @@ public class MapCell {
     public void markUnsafe(final Ship ship) {
         this.ship = ship;
     }
+	
+	public void book(final Ship ship) {
+		Log.log("[BOOK] Ship "+ ship.id +": "+ position.x +","+ position.y);
+		this.booked = true;
+	}
 }

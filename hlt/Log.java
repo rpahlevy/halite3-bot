@@ -63,6 +63,8 @@ public class Log {
     }
 
     public static void log(final String message) {
+		if (true) return;
+		
         if (INSTANCE == null) {
             LOG_BUFFER.add(message);
             return;

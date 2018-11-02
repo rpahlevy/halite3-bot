@@ -38,7 +38,8 @@ public class GameMap {
         final int toroidal_dx = Math.min(dx, width - dx);
         final int toroidal_dy = Math.min(dy, height - dy);
 
-        return toroidal_dx + toroidal_dy;
+        // return toroidal_dx + toroidal_dy;
+		return Math.max(toroidal_dx, toroidal_dy);
     }
 
     public Position normalize(final Position position) {
@@ -88,40 +89,39 @@ public class GameMap {
 	
 	public Direction getNextDirection(final Ship ship, final Position destination)
 	{
-		int dist = calculateDistance(ship.position, destination) * 2;
-		Position nextPosition = ship.position;
+		return getNextDirection(ship, destination, true);
+	}
+	public Direction getNextDirection(final Ship ship, final Position destination, final boolean patience)
+	{
+		int dist = Integer.MAX_VALUE;
+		// Position nextPosition = ship.position;
 		Direction nextDirection = Direction.STILL;
 		
 		for (Direction d: Direction.ALL_CARDINALS) {
 			Position p = normalize(ship.position.directionalOffset(d));
 			MapCell cell = at(p);
-			if (cell.isOccupied()) continue;
+			// skip if occupied by enemy, because we dont know when thhey will make a move
+			// OR if not patience & occupied by whoever
+			if (cell.isOccupied()) {
+				if (!patience || !cell.ship.owner.equals(ship.owner)) {
+					continue;
+				}
+			}
 			
 			int distTest = calculateDistance(p, destination);
 			if (distTest < dist) {
 				dist = distTest;
-				nextPosition = p;
+				// nextPosition = p;
 				nextDirection = d;
 			}
 		}
 		
-		// if (!nextPosition.equals(ship.position)) {
+		// if has enough halite to move, go
 		if (nextDirection != Direction.STILL) {
             int cost = (int) Math.ceil(at(ship.position).halite * 0.1);
             if (cost == 0 || ship.halite > cost) {
-                // MapCell dCell = at(destination);
-                // if (!dCell.hasStructure()) {
-                    // dCell.markUnsafe(ship);
-                // }
-                
-                // at(nextPosition).markUnsafe(ship);
-                // at(ship.position).ship = null;
-				
 				return nextDirection;
             }
-			// else {
-                // nextDirection = Direction.STILL;
-            // }
 		}
 		
 		return Direction.STILL;
@@ -131,6 +131,7 @@ public class GameMap {
 		return getNextHaliteDirection(ship, 51);
 	}
 	public Direction getNextHaliteDirection(final Ship ship, final int targetHalite){
+		final int MAX_RANGE = 10;
         final ArrayList<Position> frontier = new ArrayList<>();
         final ArrayList<Position> visited = new ArrayList<>();
 
@@ -145,6 +146,10 @@ public class GameMap {
         while (frontier.size() > 0 && !nodeFound)
         {
             Position currentPosition = frontier.remove(0);
+			if (Math.abs(currentPosition.x - ship.position.x) > MAX_RANGE && Math.abs(currentPosition.y - ship.position.y) > MAX_RANGE) {
+				break;
+			}
+			
             for (Direction d: Direction.ALL_CARDINALS) {
                 Position p = normalize(currentPosition.directionalOffset(d));
                 if (!visited.contains(p)) {
@@ -159,7 +164,8 @@ public class GameMap {
                     nodeFound = true;
                     nextPosition = p;
 
-					// find the most, so dont breakdance
+					// find the most: dont breakdance
+					// find closest: break leg
                     // break;
                 }
 
@@ -168,17 +174,17 @@ public class GameMap {
                 }
             }
         }
-
+		
         // check if really found the node
         if (nodeFound)
         {
-			at(nextPosition).booked = true;
+			at(nextPosition).book(ship);
             return getNextDirection(ship, nextPosition);
         }
         // else check alternative
         else if (!altPosition.equals(ship.position))
         {
-			at(altPosition).booked = true;
+			at(altPosition).book(ship);
             return getNextDirection(ship, altPosition);
         }
 

@@ -35,17 +35,17 @@ public class MyBot {
             final GameMap gameMap = game.gameMap;
 
 			final HashMap<Ship,Direction> queuedShip = new HashMap<>();
-			final HashMap<Ship,Direction> plannedShip = new HashMap<>();
             final ArrayList<Command> commandQueue = new ArrayList<>();
 
             for (final Ship ship : me.ships.values()) {
                 ship.planned = false;
+				
 				String status = shipStatus.get(ship.id);
 				if (status == null) {
 					shipStatus.put(ship.id, STATUS_EXPLORE);
 				}
 				
-				// log("Ship "+ ship.id +" ["+ shipStatus.get(ship.id) +"] has "+ ship.halite +" halite");
+				
 				Direction d = Direction.STILL;
 				if (status == STATUS_RETURN)
 				{
@@ -63,6 +63,8 @@ public class MyBot {
 						d = gameMap.getNextDirection(ship, me.shipyard.position);
 					} else if (gameMap.at(ship).halite < Constants.MAX_HALITE / 20) {
 						d = gameMap.getNextHaliteDirection(ship);
+					} else {
+						gameMap.at(ship.position).book(ship);
 					}
 				}
 				
@@ -233,20 +235,21 @@ public class MyBot {
 				final Ship ocp = gameMap.at(me.shipyard).ship;
 				if (ocp == null || !ocp.owner.equals(me.id))
 				{
+					commandQueue.add(me.shipyard.spawn());
 					// check if shipyard is surrounded
-					boolean shipyardSurrounded = true;
-					for (Direction d: Direction.ALL_CARDINALS) {
-						Position p = gameMap.normalize(me.shipyard.position.directionalOffset(d));
-						MapCell cell = gameMap.at(p);
-						if (!cell.isOccupied()) {
-							shipyardSurrounded = false;
-							break;
-						}
-					}
+					// boolean shipyardSurrounded = true;
+					// for (Direction d: Direction.ALL_CARDINALS) {
+						// Position p = gameMap.normalize(me.shipyard.position.directionalOffset(d));
+						// MapCell cell = gameMap.at(p);
+						// if (!cell.isOccupied()) {
+							// shipyardSurrounded = false;
+							// break;
+						// }
+					// }
 
-					if (!shipyardSurrounded) {
-						commandQueue.add(me.shipyard.spawn());
-					}
+					// if (!shipyardSurrounded) {
+						// commandQueue.add(me.shipyard.spawn());
+					// }
 				}
             }
 
