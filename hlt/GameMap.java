@@ -38,8 +38,8 @@ public class GameMap {
         final int toroidal_dx = Math.min(dx, width - dx);
         final int toroidal_dy = Math.min(dy, height - dy);
 
-        // return toroidal_dx + toroidal_dy;
-		return Math.max(toroidal_dx, toroidal_dy);
+        return toroidal_dx + toroidal_dy;
+		// return Math.max(toroidal_dx, toroidal_dy);
     }
 
     public Position normalize(final Position position) {
