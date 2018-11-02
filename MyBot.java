@@ -38,8 +38,7 @@ public class MyBot {
             final ArrayList<Command> commandQueue = new ArrayList<>();
 
             for (final Ship ship : me.ships.values()) {
-                ship.planned = false;
-				
+                ship.planned = false;				
 				String status = shipStatus.get(ship.id);
 				if (status == null) {
 					shipStatus.put(ship.id, STATUS_EXPLORE);
@@ -236,20 +235,6 @@ public class MyBot {
 				if (ocp == null || !ocp.owner.equals(me.id))
 				{
 					commandQueue.add(me.shipyard.spawn());
-					// check if shipyard is surrounded
-					// boolean shipyardSurrounded = true;
-					// for (Direction d: Direction.ALL_CARDINALS) {
-						// Position p = gameMap.normalize(me.shipyard.position.directionalOffset(d));
-						// MapCell cell = gameMap.at(p);
-						// if (!cell.isOccupied()) {
-							// shipyardSurrounded = false;
-							// break;
-						// }
-					// }
-
-					// if (!shipyardSurrounded) {
-						// commandQueue.add(me.shipyard.spawn());
-					// }
 				}
             }
 
