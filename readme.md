@@ -2,12 +2,12 @@
 ### v4
 
 ## TODO
-- ~Generate ship di awal terlalu lama, karena yg sudah generated masih nunggu di shipyard~
-- [HIGH] kadang stuck jika antre melibatkan lebih dari 4 orang
-- How to solve kalau di near end game ship banyak yg hancur?
-- How to solve kalau dikepung???
-- Swap move masih terlalu kaku
-- Cari halite kayaknya gaperlu antre, ini mesti di navigate nya yg problem, karena finding udah OK
+- [x] Generate ship di awal terlalu lama, karena yg sudah generated masih nunggu di shipyard
+- [ ] [HIGH] kadang stuck jika antre melibatkan lebih dari 4 orang
+- [ ] How to solve kalau di near end game ship banyak yg hancur?
+- [ ] How to solve kalau dikepung???
+- [ ] Swap move masih terlalu kaku
+- [ ] Cari halite kayaknya gaperlu antre, ini mesti di navigate nya yg problem, karena finding udah OK
 
 ## Log
 
