@@ -21,13 +21,11 @@ public class MyBot {
 		final HashMap<EntityId,String> shipStatus = new HashMap<>();
 		final String STATUS_EXPLORE = "explore";
 		final String STATUS_RETURN  = "return";
-
-        int maxShip = 0;
 		
         // At this point "game" variable is populated with initial map data.
         // This is a good place to do computationally expensive start-up pre-processing.
         // As soon as you call "ready" function below, the 2 second per turn timer will start.
-        game.ready("rpahlevy");
+        game.ready("rpahlevy v5");
 
         log("Successfully created bot! My Player ID is " + game.myId + ". Bot rng seed is " + rngSeed + ".");
 
@@ -150,7 +148,7 @@ public class MyBot {
 			
 			for (final Ship ship: queuedShip.keySet()) {
                 // log("\t[CP] Ship "+ ship.id +" ["+ d +"]");
-				if (ship.planned) continue;
+				// if (ship == null) continue;
 				
 				Direction d = queuedShip.get(ship);
 				Position targetPosition = gameMap.normalize(ship.position.directionalOffset(d));
@@ -229,12 +227,8 @@ public class MyBot {
 			}
 			
 
-            if (game.turnNumber == 200) {
-                maxShip = 20;
-            }
-
             if(
-                (game.turnNumber <= 200 || (game.turnNumber > 200 && me.ships.values().size() < maxShip)) &&
+                game.turnNumber <= 200 &&
                 me.halite >= Constants.SHIP_COST )
 			{
 				final Ship ocp = gameMap.at(me.shipyard).ship;

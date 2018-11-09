@@ -1,0 +1,37 @@
+package hlt;
+
+public class MapCell {
+    public final Position position;
+    public int halite;
+    public Ship ship;
+    public Entity structure;
+	
+	public boolean booked;
+
+    public MapCell(final Position position, final int halite) {
+        this.position = position;
+        this.halite = halite;
+		this.booked = false;
+    }
+
+    public boolean isEmpty() {
+        return ship == null && structure == null;
+    }
+
+    public boolean isOccupied() {
+        return ship != null;
+    }
+
+    public boolean hasStructure() {
+        return structure != null;
+    }
+
+    public void markUnsafe(final Ship ship) {
+        this.ship = ship;
+    }
+	
+	public void book(final Ship ship) {
+		Log.log("[BOOK] Ship "+ ship.id +": "+ position.x +","+ position.y);
+		this.booked = true;
+	}
+}
