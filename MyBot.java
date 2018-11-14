@@ -21,6 +21,7 @@ public class MyBot {
 		final HashMap<EntityId,String> shipStatus = new HashMap<>();
 		final String STATUS_EXPLORE = "explore";
 		final String STATUS_RETURN  = "return";
+        final int MAX_TURN = (int)Math.floor(Math.min(game.gameMap.width, game.gameMap.height) * 25 / 8) + 300;
 
         int maxShip = 0;
 		
@@ -30,11 +31,13 @@ public class MyBot {
         game.ready("rpahlevy");
 
         log("Successfully created bot! My Player ID is " + game.myId + ". Bot rng seed is " + rngSeed + ".");
+        boolean kamikaze = false;
 
         for (;;) {
             game.updateFrame();
             final Player me = game.me;
             final GameMap gameMap = game.gameMap;
+            kamikaze = game.turnNumber > MAX_TURN - 50;
 
 			final HashMap<Ship,Direction> queuedShip = new HashMap<>();
             final ArrayList<Command> commandQueue = new ArrayList<>();
@@ -51,15 +54,19 @@ public class MyBot {
 				if (status == STATUS_RETURN)
 				{
 					if (ship.position.equals(me.shipyard.position)) {
-						shipStatus.put(ship.id, STATUS_EXPLORE);
-						d = gameMap.getNextHaliteDirection(ship);
+                        if (!kamikaze) {
+                            shipStatus.put(ship.id, STATUS_EXPLORE);
+                            d = gameMap.getNextHaliteDirection(ship);
+                        } else {
+                            d = Direction.STILL;
+                        }
 					} else {
 						d = gameMap.getNextDirection(ship, me.shipyard.position);
 					}
 				}
 				else
 				{
-					if (ship.halite >= Constants.MAX_HALITE * 0.9) {
+					if (ship.halite >= Constants.MAX_HALITE * 0.75 || kamikaze) {
 						shipStatus.put(ship.id, STATUS_RETURN);
 						d = gameMap.getNextDirection(ship, me.shipyard.position);
 					} else if (gameMap.at(ship).halite < Constants.MAX_HALITE / 20) {
@@ -85,7 +92,7 @@ public class MyBot {
 					}
 					
 					// if target node not occupied
-					if (!targetNode.isOccupied()) {
+					if (!targetNode.isOccupied() || (targetNode.hasStructure() && kamikaze)) {
 						break;
 					}
 					
@@ -230,11 +237,12 @@ public class MyBot {
 			
 
             if (game.turnNumber == 200) {
-                maxShip = 20;
+                maxShip = me.ships.values().size();
             }
 
             if(
-                (game.turnNumber <= 200 || (game.turnNumber > 200 && me.ships.values().size() < maxShip)) &&
+                game.turnNumber <= MAX_TURN - 200 &&
+                // (game.turnNumber <= 200 || (game.turnNumber > 200 && me.ships.values().size() < maxShip)) &&
                 me.halite >= Constants.SHIP_COST )
 			{
 				final Ship ocp = gameMap.at(me.shipyard).ship;
